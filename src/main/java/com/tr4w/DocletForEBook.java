@@ -118,9 +118,10 @@ public class DocletForEBook {
     }
 
     private static String parameterToString(com.sun.javadoc.Parameter parameter) {
-        return "<b><tt>" + parameter.type() + "</tt></b> " + parameter.name();
-
-
+        String type = parameter.type().toString();
+        type = type.replace("java.util.", "j.u.");
+        type = type.replace("java.lang.", "");
+        return "<b><tt>" + type + "</tt></b> " + parameter.name();
     }
 
     private static void printTags(FileWriter fileWriter, Tag[] tags) throws IOException {
