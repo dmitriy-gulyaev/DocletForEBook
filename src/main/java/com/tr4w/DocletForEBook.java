@@ -19,26 +19,23 @@ public class DocletForEBook {
 
             ClassDoc classDoc = classes[i];
 
-            java.io.File file = new java.io.File("out/" + classDoc.toString().replaceAll("\\.", "/") + ".html");
-            // System.out.println(file);
+            java.io.File file = new java.io.File(classDoc.toString().replaceAll("\\.", "/") + ".html");
             file.getParentFile().mkdirs();
 
 
             try (java.io.FileWriter fileWriter = new java.io.FileWriter(file)) {
                 fileWriter.write("<html><head>");
                 fileWriter.write("<title>" + classDoc.typeName() + "</title>");
-                // fileWriter.write("<style> u {color: #ffffff; background: #444444; text-decoration-line:
-                // none;}</style>");
                 fileWriter.write("</head><body>");
 
-                if (classDoc.isAbstract()) {
-                    fileWriter.write("abstract ");
-                }
                 if (classDoc.isFinal()) {
                     fileWriter.write("final ");
                 }
 
                 if (classDoc.isClass()) {
+                if (classDoc.isAbstract()) {
+                    fileWriter.write("abstract ");
+                }
                     fileWriter.write("Class ");
                 } else if (classDoc.isInterface()) {
                     fileWriter.write("Interface ");
