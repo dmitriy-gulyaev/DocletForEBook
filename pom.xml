@@ -2,45 +2,49 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>com.tr4w</groupId>
-    <artifactId>doclet-for-ebook</artifactId>
-    <version>1.0</version>
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.tr4w</groupId>
+	<artifactId>doclet-for-ebook</artifactId>
+	<version>1.0</version>
 
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
+	<properties>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.sun</groupId>
-            <artifactId>tools</artifactId>
-            <version>1</version>
-            <scope>system</scope>
-            <systemPath>${env.JAVA_HOME}\lib\tools.jar</systemPath>
-        </dependency>
-    </dependencies>
+	<dependencies>
+		<dependency>
+			<groupId>com.sun</groupId>
+			<artifactId>tools</artifactId>
+			<version>1</version>
+			<scope>system</scope>
+			<!--<systemPath>${env.JAVA_HOME}\lib\tools.jar</systemPath> -->
+			<systemPath>c:\Program Files\Java\jdk1.8.0_191\lib\tools.jar</systemPath>
+		</dependency>
 
-    <build>
-        <plugins>
-            <plugin>
-                <!--mvn javadoc:javadoc-->
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.4</version>
-                <configuration>
-                    <doclet>com.tr4w.DocletForEBook</doclet>
-                    <docletPath>${project.build.directory}/classes</docletPath>
-                    <sourcepath>c:/Java/src</sourcepath>
-                    <additionalOptions>
-                        <additionalOption>-subpackages</additionalOption>
-                        <additionalOption>org.springframework.jms</additionalOption>
-                    </additionalOptions>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<!--mvn javadoc:javadoc -->
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.4</version>
+				<configuration>
+					<doclet>com.tr4w.DocletForEBook</doclet>
+					<docletPath>${project.build.directory}/classes</docletPath>
+					<sourcepath>c:/Java/src</sourcepath>
+					<subpackages>java.util.stream</subpackages>
+					<nohelp>true</nohelp>
+					<noindex>true</noindex>
+					<nonavbar>true</nonavbar>
+					<debug>true</debug>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
 </project>
