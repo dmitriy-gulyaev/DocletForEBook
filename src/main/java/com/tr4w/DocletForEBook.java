@@ -83,7 +83,8 @@ public class DocletForEBook {
 			int lastDot = classDoc.toString().lastIndexOf('.');
 
 			System.out.println(lastDot + " " + subPackage.length());
-			if (lastDot != subPackage.length()) {
+
+			if (lastDot != subPackage.length() && !Character.isUpperCase(classDoc.toString().charAt(lastDot + 1))) {
 				continue;
 			}
 
@@ -94,7 +95,7 @@ public class DocletForEBook {
 
 			manifest.add(new Item(id, filename));
 			spine.add(new Itemref(id));
-			toc.add(new NavPoint(toc.size(), classDoc.toString(), filename));
+			toc.add(new NavPoint(toc.size(), classDoc.name(), filename));
 
 			String html = processClassDoc(classDoc);
 			addEntry(zipOutputStream, filenameFull, html);
@@ -132,7 +133,7 @@ public class DocletForEBook {
 		tocncx.append("<head></head>\r\n");
 		tocncx.append("<docTitle><text>" + subPackage + "</text></docTitle>\r\n");
 		tocncx.append("<navMap>\r\n");
-		toc.forEach(navPoint -> tocncx.append("    " + navPoint + "\r\n"));
+		toc.stream().sorted().forEach(navPoint -> tocncx.append("    " + navPoint + "\r\n"));
 		tocncx.append("</navMap></ncx>");
 		addEntry(zipOutputStream, "OEBPS/toc.ncx", tocncx.toString());
 
@@ -150,7 +151,7 @@ public class DocletForEBook {
 				"<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\" xml:lang=\"en\" lang=\"en\">\r\n");
 		sb.append("<head>");
 		sb.append("<title>" + classDoc.typeName() + "</title>");
-		sb.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"epub3.css\"/>");
+		// sb.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"epub3.css\"/>");
 		sb.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>");
 		sb.append("</head><body>");
 
@@ -167,7 +168,7 @@ public class DocletForEBook {
 			sb.append("Interface ");
 		}
 
-		sb.append("<b>" + classDoc + "</b>");
+		sb.append("<b>" + classDoc.name() + "</b>");
 
 		ClassDoc tempClassDoc = classDoc;
 
@@ -261,13 +262,9 @@ public class DocletForEBook {
 
 	private static void printTags(StringBuilder sb, Tag[] tags) {
 		if (tags.length > 0) {
-			// fileWriter.write("<br/>");
 			Stream.of(tags).filter(DocletForEBook::filterTag).forEach(tag -> {
-				sb.append("<br/><b>" + replaceTags(tag.toString())
-						// .replace("<", "&lt;")
-						.replace(":", "</b>: ").substring(1));
+				sb.append("<br/><b>" + replaceTags(tag.toString()).replaceFirst(":", "</b>: ").substring(1));
 			});
-			// fileWriter.write("<br/>");
 		}
 	}
 
@@ -276,7 +273,7 @@ public class DocletForEBook {
 	}
 
 	public static void main(String[] args) {
-		Main.execute(new String[] { "-doclet", DocletForEBook.class.getName(), "-subpackages", "java.util.steram",
+		Main.execute(new String[] { "-doclet", DocletForEBook.class.getName(), "-subpackages", "java.util.stream",
 				"-sourcepath", "c:/Java/src" });
 	}
 
@@ -482,7 +479,7 @@ public class DocletForEBook {
 		}
 	}
 
-	static class NavPoint {
+	static class NavPoint implements Comparable<NavPoint> {
 		final String id;
 		final String text;
 		final String src;
@@ -497,6 +494,11 @@ public class DocletForEBook {
 		public String toString() {
 			return "<navPoint id=\"" + id + "\"><navLabel><text>" + text + "</text></navLabel><content src=\"" + src
 					+ "\"/></navPoint>";
+		}
+
+		@Override
+		public int compareTo(NavPoint o) {
+			return this.text.compareTo(o.text);
 		}
 	}
 
