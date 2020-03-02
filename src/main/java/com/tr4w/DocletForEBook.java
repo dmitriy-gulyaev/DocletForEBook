@@ -4,6 +4,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -115,9 +117,9 @@ public class DocletForEBook {
 
     packageOpf.append("<metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\r\n");
     packageOpf.append("<dc:language id=\"pub-language\">en</dc:language>");
-    packageOpf.append("<dc:identifier id=\"pub-identifier\">_pro_git</dc:identifier>");
+    packageOpf.append("<dc:identifier id=\"pub-identifier\">doclet-for-epub</dc:identifier>");
     packageOpf.append("<dc:title id=\"pub-title\">" + subPackage + '-' + LocalDate.now() + "</dc:title>");
-    packageOpf.append("<meta property=\"dcterms:modified\">2020-01-07T18:29:50Z</meta>");
+    packageOpf.append("<meta property=\"dcterms:modified\">" + LocalDateTime.now() + "</meta>");
     packageOpf.append("</metadata>\r\n");
 
     packageOpf.append("<manifest>\r\n");
@@ -274,8 +276,8 @@ public class DocletForEBook {
   }
 
   public static void main(String[] args) {
-    Main.execute(new String[] { "-doclet", DocletForEBook.class.getName(), "-subpackages", "java.time", "-sourcepath",
-        "c:/Java/src" });
+    Main.execute(new String[] { "-doclet", DocletForEBook.class.getName(), "-subpackages", "java.time",
+        "-sourcepath", "c:/Java/src" });
   }
 
   private static String addMissedCloseTags(String comment) {
@@ -432,7 +434,7 @@ public class DocletForEBook {
 
   enum TagType {
 
-    LINKPLAIN("b"), LINK("b"), CODE("span");
+    LINKPLAIN("u"), LINK("u"), CODE("span");
 
     TagType(String htmlTag) {
       this.htmlTag = htmlTag;

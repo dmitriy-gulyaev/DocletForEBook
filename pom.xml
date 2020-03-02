@@ -20,7 +20,7 @@
 			<version>1</version>
 			<scope>system</scope>
 			<!--<systemPath>${env.JAVA_HOME}\lib\tools.jar</systemPath> -->
-			<systemPath>c:\Program Files\Java\jdk1.8.0_191\lib\tools.jar</systemPath>
+			<systemPath>${env.JAVA_HOME}\lib\tools.jar</systemPath>
 		</dependency>
 
 
