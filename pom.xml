@@ -24,6 +24,14 @@
 		</dependency>
 
 
+		<!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
+		<dependency>
+			<groupId>org.jsoup</groupId>
+			<artifactId>jsoup</artifactId>
+			<version>1.12.2</version>
+		</dependency>
+
+
 	</dependencies>
 
 	<build>
@@ -37,7 +45,7 @@
 					<doclet>com.tr4w.DocletForEBook</doclet>
 					<docletPath>${project.build.directory}/classes</docletPath>
 					<sourcepath>c:/Java/src</sourcepath>
-					<subpackages>java.util.stream</subpackages>
+					<subpackages>java.lang</subpackages>
 					<nohelp>true</nohelp>
 					<noindex>true</noindex>
 					<nonavbar>true</nonavbar>
