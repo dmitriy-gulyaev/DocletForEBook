@@ -81,7 +81,7 @@ public class DocletForEBook {
   public static boolean start(RootDoc root) throws IOException {
     String subPackage = getSubPackage(root.options());
 
-    ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(subPackage + ".epub"));
+    ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(shortened(subPackage) + ".epub"));
     List<Item> manifest = new ArrayList<DocletForEBook.Item>();
     List<Itemref> spine = new ArrayList<DocletForEBook.Itemref>();
     List<NavPoint> toc = new ArrayList<DocletForEBook.NavPoint>();
@@ -102,7 +102,7 @@ public class DocletForEBook {
       int lastDot = classDoc.toString().lastIndexOf('.');
 
       if (lastDot != subPackage.length()) {
-        continue;
+        // continue;
       }
 
       String filename = classDoc.toString().replaceAll("\\.", "/") + ".xhtml";
@@ -129,7 +129,7 @@ public class DocletForEBook {
     packageOpf.append("<metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\r\n");
     packageOpf.append("<dc:language id=\"pub-language\">en</dc:language>");
     packageOpf.append("<dc:identifier id=\"pub-identifier\">doclet-for-epub</dc:identifier>");
-    packageOpf.append("<dc:title id=\"pub-title\">" + subPackage + '-' + LocalDate.now() + "</dc:title>");
+    packageOpf.append("<dc:title id=\"pub-title\">" + shortened(subPackage) + '-' + LocalDate.now() + "</dc:title>");
     packageOpf.append("<meta property=\"dcterms:modified\">" + LocalDateTime.now() + "</meta>");
     packageOpf.append("</metadata>\r\n");
 
@@ -150,7 +150,7 @@ public class DocletForEBook {
     tocncx.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n");
     tocncx.append("<ncx xmlns=\"http://www.daisy.org/z3986/2005/ncx/\" version=\"2005-1\" xml:lang=\"en\">\r\n");
     tocncx.append("<head></head>\r\n");
-    tocncx.append("<docTitle><text>" + subPackage + "</text></docTitle>\r\n");
+    tocncx.append("<docTitle><text>" + shortened(subPackage) + "</text></docTitle>\r\n");
     tocncx.append("<navMap>\r\n");
     toc.stream().sorted().forEach(navPoint -> tocncx.append("    " + navPoint + "\r\n"));
     tocncx.append("</navMap></ncx>");
@@ -162,6 +162,10 @@ public class DocletForEBook {
     zipOutputStream.close();
 
     return true;
+  }
+
+  private static String shortened(String className) {
+    return className.replaceAll("org.springframework.", "o.s.");
   }
 
   private static String processClassDoc(ClassDoc classDoc) {
@@ -199,12 +203,12 @@ public class DocletForEBook {
       if (tempClassDoc.toString().equals("java.lang.Object")) {
         break;
       }
-      sb.append(" &#8594; " + tempClassDoc);
+      sb.append(" &#8594; " + shortened(tempClassDoc.toString()));
     }
 
     if (classDoc.interfaceTypes() != null) {
       for (Type type : classDoc.interfaceTypes()) {
-        sb.append(" + " + type);
+        sb.append(" + " + shortened(type.toString()));
       }
     }
 
@@ -274,7 +278,7 @@ public class DocletForEBook {
   }
 
   private static String parameterToString(Parameter parameter) {
-    String type = parameter.type().simpleTypeName();
+    String type = shortened(parameter.type().toString());
     return "<b>" + type + "</b> " + parameter.name();
   }
 
@@ -389,7 +393,7 @@ public class DocletForEBook {
 
     // int skip = 0;
 
-    for (int i = 0; i < comment.length()-1; i++) {
+    for (int i = 0; i < comment.length() - 1; i++) {
 
       char c = comment.charAt(i);
 
