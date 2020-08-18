@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -17,7 +16,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.jsoup.Jsoup;
-import org.jsoup.internal.Normalizer;
 import org.jsoup.nodes.Document.OutputSettings;
 import org.jsoup.safety.Whitelist;
 
@@ -26,15 +24,26 @@ import com.sun.javadoc.ConstructorDoc;
 import com.sun.javadoc.Doc;
 import com.sun.javadoc.FieldDoc;
 import com.sun.javadoc.MethodDoc;
+import com.sun.javadoc.ParamTag;
 import com.sun.javadoc.Parameter;
 import com.sun.javadoc.ParameterizedType;
 import com.sun.javadoc.ProgramElementDoc;
 import com.sun.javadoc.RootDoc;
 import com.sun.javadoc.Tag;
 import com.sun.javadoc.Type;
+import com.sun.javadoc.TypeVariable;
 import com.sun.tools.javadoc.Main;
 
 public class DocletForEBook {
+
+  private static Whitelist whitelist = Whitelist.simpleText();
+  private static OutputSettings outputSettings;
+
+  static {
+    whitelist.addTags("h3", "p", "li", "ul", "pre", "table", "tr", "td", "caption", "a");
+    outputSettings = new OutputSettings().syntax(OutputSettings.Syntax.xml).charset(StandardCharsets.UTF_8)
+        .prettyPrint(true);
+  }
 
   private DocletForEBook() {
   }
@@ -107,8 +116,10 @@ public class DocletForEBook {
 
       String html = processClassDoc(classDoc);
       addEntry(zipOutputStream, filenameFull, html);
-
     }
+
+    manifest.add(new Item("css", "stylesheet.css", "text/css"));
+    manifest.add(new Item("ncx", "toc.ncx", "application/x-dtbncx+xml"));
 
     StringBuilder packageOpf = new StringBuilder(1024);
     packageOpf.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n");
@@ -123,7 +134,6 @@ public class DocletForEBook {
     packageOpf.append("</metadata>\r\n");
 
     packageOpf.append("<manifest>\r\n");
-    packageOpf.append("    <item href=\"toc.ncx\" id=\"ncx\" media-type=\"application/x-dtbncx+xml\"/>\r\n");
 
     manifest.stream().sorted().forEach(item -> packageOpf.append("    " + item + "\r\n"));
     packageOpf.append("</manifest>\r\n");
@@ -146,6 +156,9 @@ public class DocletForEBook {
     tocncx.append("</navMap></ncx>");
     addEntry(zipOutputStream, "OEBPS/toc.ncx", tocncx.toString());
 
+    addEntry(zipOutputStream, "OEBPS/" + subPackage.replace('.', '/') + "/stylesheet.css",
+        "pre {font-size: 60%;} body{font-family: Geneva, Arial, Helvetica, sans-serif;} ul{padding: 0;list-style-type: none;}");
+
     zipOutputStream.close();
 
     return true;
@@ -160,7 +173,7 @@ public class DocletForEBook {
         "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\" xml:lang=\"en\" lang=\"en\">\r\n");
     sb.append("<head>");
     sb.append("<title>" + classDoc.typeName() + "</title>");
-    // sb.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"epub3.css\"/>");
+    sb.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"stylesheet.css\"/>");
     sb.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>");
     sb.append("</head><body>");
 
@@ -177,7 +190,7 @@ public class DocletForEBook {
       sb.append("Interface ");
     }
 
-    sb.append("<b>" + classDoc.name() + "</b>");
+    sb.append("<b>" + classDoc.simpleTypeName() + "</b>");
 
     ClassDoc tempClassDoc = classDoc;
 
@@ -212,7 +225,7 @@ public class DocletForEBook {
       return;
     }
     sb.append("<h4>" + name + " (" + docs.length + ")</h4>");
-    sb.append("<ul>");
+    // sb.append("<ul>");
 
     Arrays.sort(docs);
     for (int c = 0; c < docs.length; ++c) {
@@ -231,6 +244,7 @@ public class DocletForEBook {
           type = methodDoc.returnType().asParameterizedType().asClassDoc().toString();
         } else {
           type = methodDoc.returnType().simpleTypeName() + methodDoc.returnType().dimension();
+          System.out.println("---" + methodDoc.signature());
         }
 
         signature = Stream.of(methodDoc.parameters()).map(DocletForEBook::parameterToString)
@@ -238,7 +252,9 @@ public class DocletForEBook {
       } else if (doc instanceof FieldDoc) {
         type = ((FieldDoc) doc).type().toString();
       }
-      sb.append("<li><b>" + (c + 1) + "</b>. ");
+      // sb.append("<li>");
+      sb.append("<p>");
+      sb.append("<b>" + (c + 1) + "</b>. ");
 
       ProgramElementDoc programElementDoc = (ProgramElementDoc) doc;
       sb.append(programElementDoc.modifiers() + " ");
@@ -251,13 +267,14 @@ public class DocletForEBook {
         sb.append("&#9632;");
       }
 
-      sb.append("</li>\n\n");
+      sb.append("</p>\n\n");
+      // sb.append("</li>\n\n");
     }
-    sb.append("</ul>");
+    // sb.append("</ul>");
   }
 
   private static String parameterToString(Parameter parameter) {
-    String type = parameter.type().toString();
+    String type = parameter.type().simpleTypeName();
     return "<b>" + type + "</b> " + parameter.name();
   }
 
@@ -266,8 +283,13 @@ public class DocletForEBook {
       Stream.of(tags).filter(DocletForEBook::filterTag).collect(Collectors.groupingBy(Tag::name))
           .forEach((tag, list) -> {
             sb.append("<br/><b>" + tag.substring(1) + "</b>: "
-                + list.stream().map(tg -> replaceTags(tg.text())).collect(Collectors.joining(", ")));
+                + list.stream().map(tg -> "@param".equals(tag) ? tg.text() : replaceTags(tg.text()))
+                    .collect(Collectors.joining(", ")));
           });
+
+      Stream.of(tags).filter(tag -> tag.name().equals("@param"))
+          .forEach(tag -> sb.append("<br/><b>" + tag.name().substring(1) + "</b>: " + tag.text().replace("<", "&lt;")));
+
     }
   }
 
@@ -276,7 +298,7 @@ public class DocletForEBook {
   }
 
   public static void main(String[] args) {
-    Main.execute(new String[] { "-doclet", DocletForEBook.class.getName(), "-subpackages", "java.time",
+    Main.execute(new String[] { "-doclet", DocletForEBook.class.getName(), "-subpackages", "javax.persistence",
         "-sourcepath", "c:/Java/src" });
   }
 
@@ -347,14 +369,8 @@ public class DocletForEBook {
   }
 
   static String cleanXmlAndRemoveUnwantedTags(String textToEscape) {
-    Whitelist whitelist = Whitelist.simpleText();
-    whitelist.addTags("h3", "p", "li", "ul", "pre", "table", "tr", "td", "caption", "a");
 
-    OutputSettings outputSettings = new OutputSettings().syntax(OutputSettings.Syntax.xml)
-        .charset(StandardCharsets.UTF_8).prettyPrint(true);
-
-    String safe = Jsoup.clean(textToEscape, "", whitelist, outputSettings);
-    return safe;
+    return Jsoup.clean(textToEscape, "", whitelist, outputSettings);
   }
 
   private static String replaceTags(String comment) {
@@ -367,13 +383,13 @@ public class DocletForEBook {
       return comment;
     }
 
-    StringBuilder tempArray = new StringBuilder(comment.length() + 100);
+    StringBuilder tempArray = new StringBuilder(comment.length() + 200);
 
     TagType currentTag = null;
 
     // int skip = 0;
 
-    for (int i = 0; i < comment.length(); i++) {
+    for (int i = 0; i < comment.length()-1; i++) {
 
       char c = comment.charAt(i);
 
@@ -463,15 +479,21 @@ public class DocletForEBook {
   static class Item implements Comparable<Item> {
     final String id;
     final String href;
+    final String mediaType;
 
     Item(String id, String href) {
+      this(id, href, "application/xhtml+xml");
+    }
+
+    Item(String id, String href, String mediaType) {
       this.id = id;
       this.href = href;
+      this.mediaType = mediaType;
     }
 
     @Override
     public String toString() {
-      return "<item id=\"" + id + "\" href=\"" + href + "\" media-type=\"application/xhtml+xml\"/>";
+      return "<item id=\"" + id + "\" href=\"" + href + "\" media-type=\"" + mediaType + "\"/>";
     }
 
     @Override
